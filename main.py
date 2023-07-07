@@ -59,7 +59,7 @@ def productoras_exitosas(productora: str):
     return mensaje_retorno
 
 # Endpoint 6: Información del director
-@app.get("/director/{director_name}")
+@app.get('/director/{director_name}')
 def buscar_director(director_name: str):
     # Filtrar el dataset por el nombre del director
     director_df = df[df['directors_name'] == director_name]
@@ -91,18 +91,20 @@ def buscar_director(director_name: str):
     
 #SISTEMA DE RECOMENDACIÓN:
 
+df_subset = df.head(5000)
+
 # Creamos un vectorizador TF-IDF utilizando la columna 'overview'
 tfidf = TfidfVectorizer(stop_words='english')
-df['overview'] = df['overview'].fillna('')  # Reemplazamos los valores NaN con una cadena vacía
-tfidf_matrix = tfidf.fit_transform(df['overview'])
+df_subset['overview'] = df_subset['overview'].fillna('')  # Reemplazamos los valores NaN con una cadena vacía
+tfidf_matrix = tfidf.fit_transform(df_subset['overview'])
 
-#Calculamos la similitud del coseno entre películas:
+# Calculamos la similitud del coseno entre películas:
 cosine_similarities = linear_kernel(tfidf_matrix, tfidf_matrix)
 
 @app.get('/recomendacion/{titulo}')
 def recomendacion(titulo: str):
     # Obtenemos el índice de la película dada
-    idx = df[df['title'] == titulo].index[0]
+    idx = df_subset[df_subset['title'] == titulo].index[0]
 
     # Obtenemos las puntuaciones de similitud para todas las películas
     sim_scores = list(enumerate(cosine_similarities[idx]))
@@ -114,7 +116,7 @@ def recomendacion(titulo: str):
     similar_indices = [i for i, _ in sim_scores[1:6]]
 
     # Obtenemos los títulos de las películas similares
-    similar_movies = df['title'].iloc[similar_indices].values.tolist()
+    similar_movies = df_subset['title'].iloc[similar_indices].values.tolist()
 
     return similar_movies
 
